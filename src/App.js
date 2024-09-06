@@ -1,59 +1,70 @@
-import React, { useState } from 'react';
+import React, { useState, useCallback } from 'react';
 import * as XLSX from 'xlsx';
 
 function App() {
   const [urls, setUrls] = useState([]);
   const [currentIndex, setCurrentIndex] = useState(0);
-  const [buttonText, setButtonText] = useState('URL 열기'); // 버튼 텍스트 상태 추가
+  const [isOpening, setIsOpening] = useState(false);
 
-  const handleFileUpload = (event) => {
+  const handleFileUpload = useCallback((event) => {
     const file = event.target.files[0];
-
     if (file) {
       const reader = new FileReader();
       reader.onload = (e) => {
-        const data = new Uint8Array(e.target.result);
-        const workbook = XLSX.read(data, { type: 'array' });
-        const firstSheetName = workbook.SheetNames[0];
-        const worksheet = workbook.Sheets[firstSheetName];
-        const jsonData = XLSX.utils.sheet_to_json(worksheet, { header: 1 });
-
-        // URL 가져오기
-        const extractedUrls = jsonData.slice(1).map((row) => row[2]).filter(Boolean);
-        setUrls(extractedUrls); // 상태에 저장
+        try {
+          const data = new Uint8Array(e.target.result);
+          const workbook = XLSX.read(data, { type: 'array' });
+          if (!workbook.SheetNames.includes('리스트')) {
+            throw new Error("'리스트' 시트를 찾을 수 없습니다.");
+          }
+          const worksheet = workbook.Sheets['리스트'];
+          const jsonData = XLSX.utils.sheet_to_json(worksheet, { header: 1, defval: "" });
+          const extractedUrls = jsonData.map(row => row[2]).filter(url => 
+            typeof url === 'string' && url.trim().startsWith('http')
+          );
+          setUrls(extractedUrls);
+          setCurrentIndex(0);
+        } catch (error) {
+          console.error('엑셀 파일 처리 중 오류 발생:', error);
+          alert(error.message || '엑셀 파일 처리 중 오류가 발생했습니다.');
+        }
       };
       reader.readAsArrayBuffer(file);
     }
-  };
+  }, []);
 
-  const openUrlsInBatches = () => {
-    const batchSize = 10;
-    const nextBatch = urls.slice(currentIndex, currentIndex + batchSize);
-
-    let index = 0;
-
-    const openNextUrl = () => {
-      if (index < nextBatch.length) {
-        window.open(nextBatch[index], '_blank'); // 새 탭 열기
-        index++;
-
-        const randomDelay = Math.random() * 2000 + 3000; // 3000ms ~ 5000ms 사이의 랜덤 시간
-        setTimeout(openNextUrl, randomDelay); // 다음 URL 열기
+  const openNextGroup = useCallback(() => {
+    setIsOpening(true);
+    const endIndex = Math.min(currentIndex + 10, urls.length);
+    let i = currentIndex;
+    const intervalId = setInterval(() => {
+      if (i < endIndex) {
+        window.open(urls[i], '_blank');
+        i++;
       } else {
-        setCurrentIndex(currentIndex + batchSize); // 현재 인덱스를 다음 배치로 증가
-        setButtonText('다음'); // 첫 번째 배치 이후 버튼 텍스트를 '다음'으로 변경
+        clearInterval(intervalId);
+        setCurrentIndex(endIndex);
+        setIsOpening(false);
       }
-    };
-
-    openNextUrl();
-  };
+    }, 5000);
+  }, [currentIndex, urls]);
 
   return (
     <div className="App">
       <h1>엑셀 파일 업로드</h1>
       <input type="file" accept=".xlsx, .xls" onChange={handleFileUpload} />
-      {urls.length > 0 && currentIndex < urls.length && (
-        <button onClick={openUrlsInBatches}>{buttonText}</button>
+      {urls.length > 0 && (
+        <div>
+          <p>{urls.length}개의 URL이 추출되었습니다.</p>
+          {currentIndex < urls.length ? (
+            <button onClick={openNextGroup} disabled={isOpening}>
+              {isOpening ? '열기 중...' : '다음 10개 열기'}
+            </button>
+          ) : (
+            <p>모든 URL 오픈</p>
+          )}
+          <p>현재 진행: {currentIndex}/{urls.length}</p>
+        </div>
       )}
     </div>
   );

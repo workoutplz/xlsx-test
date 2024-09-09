@@ -1,15 +1,15 @@
 {
   "files": {
     "main.css": "/xlsx-test/static/css/main.e6c13ad2.css",
-    "main.js": "/xlsx-test/static/js/main.f9aa78eb.js",
+    "main.js": "/xlsx-test/static/js/main.ed1da059.js",
     "static/js/453.c62a3382.chunk.js": "/xlsx-test/static/js/453.c62a3382.chunk.js",
     "index.html": "/xlsx-test/index.html",
     "main.e6c13ad2.css.map": "/xlsx-test/static/css/main.e6c13ad2.css.map",
-    "main.f9aa78eb.js.map": "/xlsx-test/static/js/main.f9aa78eb.js.map",
+    "main.ed1da059.js.map": "/xlsx-test/static/js/main.ed1da059.js.map",
     "453.c62a3382.chunk.js.map": "/xlsx-test/static/js/453.c62a3382.chunk.js.map"
   },
   "entrypoints": [
     "static/css/main.e6c13ad2.css",
-    "static/js/main.f9aa78eb.js"
+    "static/js/main.ed1da059.js"
   ]
 }
